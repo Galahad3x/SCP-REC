@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Manfut">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/Manfut/Manfut.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
