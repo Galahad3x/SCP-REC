@@ -36,8 +36,10 @@ unsigned int Log2(unsigned long long int n);
 void PrintJugadors();
 void PrintEquipJugadors(TJugadorsEquip equip);
 
+//Numero de threads per defecte es 1 + thread principal
 int numero_threads = 2;
 
+//Com a molt podrem tenir 10 threads + thread principal
 pthread_t threads[10];
 
 // Global variables definition
@@ -64,6 +66,11 @@ int main(int argc, char *argv[])
 	
 	numero_threads--;
 	
+	if (PresupostFitxatges <= 186) {
+		printf("El pressupost és baix i pot donar errors. Per defecte 200\n");
+		PresupostFitxatges = 200;
+	}
+	
 	if (numero_threads < 0) {
 		printf("Número de threads no vàlid: Per defecte 1+1\n");
 		numero_threads = 1;
@@ -76,7 +83,7 @@ int main(int argc, char *argv[])
 	PrintEquipJugadors(MillorEquip);
 	sprintf(cad,"   Cost %d, Points: %d.\n", CostEquip(MillorEquip), PuntuacioEquip(MillorEquip));
 	write(1,cad,strlen(cad));
-	write(1,"-----------------------------------------------------------------------------------------------------\n",strlen("-----------------------------------------------------------------------------------------------------\n"));
+	write(1,"--------------------------------------------------------------------------------------------------\n",strlen("--------------------------------------------------------------------------------------------------\n"));
 	write(1,end_color,strlen(end_color));
 
 	exit(0);
@@ -190,10 +197,12 @@ void CalcularEquipOptim(long int PresupostFitxatges, PtrJugadorsEquip MillorEqui
 	
 	printf("TOTAL: First: %llXH End: %llXH\n", first, end);
 	
+	//Numero de combinacions que haurà de calcular cada thread
 	int combinacions_per_thread = ((end - first)/(numero_threads+1));
 	
 	struct ThreadArgs args_arr[10];
 	
+	//Per cada thread passar-li els paràmetres i que executi la seva funció
 	for (int i = 0; i < numero_threads; i++){
 		if (i == 0){
 			args_arr[i].first = first;
@@ -202,13 +211,14 @@ void CalcularEquipOptim(long int PresupostFitxatges, PtrJugadorsEquip MillorEqui
 		}
 		args_arr[i].end = args_arr[i].first + combinacions_per_thread;
 		args_arr[i].presupost = PresupostFitxatges;
-		printf("Thread %i First: %llXH End: %llXH\n", i, args_arr[i].first, args_arr[i].end);
+		
 		if(pthread_create(&threads[i],NULL,calcular_millor_parcial, (void *) &args_arr[i]) != 0){
-			printf("ERROR");
 			error("Error al crear un thread.");
 		}
 		sleep(0.1);
 	}
+	
+	//Cridar la funció amb el main
 	struct ThreadArgs main_args;
 	if (numero_threads == 0){
 		main_args.first = first;
@@ -220,17 +230,14 @@ void CalcularEquipOptim(long int PresupostFitxatges, PtrJugadorsEquip MillorEqui
 	
 	TJugadorsEquip retorns[10];
 	
-	printf("Thread Main First: %llXH End: %llXH\n", main_args.first, main_args.end);
 	TJugadorsEquip equip_main;
 	calcular_millor_parcial_main((void *) &main_args, &equip_main);
 	
-	// PrintEquipJugadors(equip_main);
-	
+	//Per defecte el millor es el del main, ja que existirà segur
 	MaxPuntuacio=PuntuacioEquip(equip_main);
 	memcpy(MillorEquip,&equip_main,sizeof(TJugadorsEquip));
 	
-	// printf("Aqui\n");
-	
+	//Comprovar l'equip que ha retornat cada thread per trobar el millor, que el copiarem a MillorEquip
 	for(int i = 0; i < numero_threads; i++){
 		TJugadorsEquip *retorn_thread;
 		if(pthread_join(threads[i], (void **) &retorn_thread) != 0){
@@ -246,6 +253,7 @@ void CalcularEquipOptim(long int PresupostFitxatges, PtrJugadorsEquip MillorEqui
 	}
 }
 
+//Comprovar el millor equip de dins del rang donat
 void *calcular_millor_parcial(void *argvs){
 	
 	struct ThreadArgs args = *((struct ThreadArgs *) argvs);
@@ -283,17 +291,12 @@ void *calcular_millor_parcial(void *argvs){
 		}
 		
 		// Chech if the team points is bigger than current optimal team, then evaluate if the cost is lower than the available budget
-		if (PuntuacioEquip(jugadors)>MaxPuntuacio && CostEquip(jugadors)<PresupostFitxatges)
+		if (PuntuacioEquip(jugadors)>MaxPuntuacio && CostEquip(jugadors)<=PresupostFitxatges)
 		{
 			// We have a new partial optimal team.
 			MaxPuntuacio=PuntuacioEquip(jugadors);
 			memcpy(&MillorEquip,&jugadors,sizeof(TJugadorsEquip));
 			// sprintf(cad,"%s Cost: %d  Points: %d. %s\n", color_green, CostEquip(jugadors), PuntuacioEquip(jugadors), end_color);
-			// write(1,cad,strlen(cad));
-		}
-		else
-		{
-			// sprintf(cad," Cost: %d  Points: %d. \r", CostEquip(jugadors), PuntuacioEquip(jugadors));
 			// write(1,cad,strlen(cad));
 		}
 	}
@@ -304,8 +307,7 @@ void *calcular_millor_parcial(void *argvs){
 	return return_equip;
 }
 
-
-
+//Comprovar el millor equip del rang donat pel thread main
 void calcular_millor_parcial_main(void *argvs, TJugadorsEquip *resultat){
 	
 	struct ThreadArgs args = *((struct ThreadArgs *) argvs);
@@ -349,11 +351,6 @@ void calcular_millor_parcial_main(void *argvs, TJugadorsEquip *resultat){
 			MaxPuntuacio=PuntuacioEquip(jugadors);
 			memcpy(&MillorEquip,&jugadors,sizeof(TJugadorsEquip));
 			// sprintf(cad,"%s Cost: %d  Points: %d. %s\n", color_green, CostEquip(jugadors), PuntuacioEquip(jugadors), end_color);
-			// write(1,cad,strlen(cad));
-		}
-		else
-		{
-			// sprintf(cad," Cost: %d  Points: %d. \r", CostEquip(jugadors), PuntuacioEquip(jugadors));
 			// write(1,cad,strlen(cad));
 		}
 	}
