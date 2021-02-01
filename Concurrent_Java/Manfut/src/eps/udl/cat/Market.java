@@ -110,9 +110,8 @@ public class Market {
     JugadorsEquip  CalcularEquipOptim(int PresupostFitxatges)
     {
         long maxbits;
-        int equip, primerEquip, ultimEquip, first, end;
-        int MaxPuntuacio=-1;
-        JugadorsEquip MillorEquip = null;
+        int first, end;
+        JugadorsEquip MillorEquip;
 
         //PrintJugadors();
 
@@ -122,13 +121,15 @@ public class Market {
             Error.showError("[Market:CalcularEquipOptim] The number of player overflow the maximum width supported.");
 
         // Calculate first and end team that have to be evaluated.
-        first=primerEquip=GetEquipInicial();
-        end=ultimEquip=(int)Math.pow(2,maxbits);
+        first=GetEquipInicial();
+        end=(int)Math.pow(2,maxbits);
 
         System.out.println("TOTAL: First: " + String.format("%x",first) + "H End: " + String.format("%x",end) + "H\n");
 
-        int combinacions_per_thread = ((end - first) / (Manfut.numero_threads + 1));
+        //Combinacions que haurà de calcular cada thread
+        int combinacions_per_thread = (int) Math.ceil(((float) (end - first) / (Manfut.numero_threads + 1)));
 
+        //Executar paralelament tots els threads
         for(int i = 0; i < Manfut.numero_threads; i++){
             if(i == 0){
                 Manfut.threads[i] = new Manfut.Thrd(first, first + combinacions_per_thread, PresupostFitxatges, this, i);
@@ -143,6 +144,7 @@ public class Market {
         }else{
             main_thrd = new Manfut.Thrd(Manfut.threads[Manfut.numero_threads-1].end, Manfut.threads[Manfut.numero_threads-1].end + combinacions_per_thread, PresupostFitxatges, this,Manfut.numero_threads);
         }
+        //El thread principal l'executa aquest mateix
         main_thrd.run();
         MillorEquip = this.ObtenirJugadorsEquip(new IdEquip(Manfut.threads_return[Manfut.numero_threads]));
         // System.out.println(MillorEquip);

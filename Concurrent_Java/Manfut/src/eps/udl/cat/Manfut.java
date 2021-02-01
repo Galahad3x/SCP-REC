@@ -18,6 +18,11 @@ public class Manfut {
             throw new IllegalArgumentException("Error in arguments: ManFut <presupost> <fitxer_jugadors>");
 
         PresupostFitxatges = Integer.parseInt(args[0]);
+        if (PresupostFitxatges <= 186){
+            System.out.println("Pressupost baix podria donar errors, per defecte 200.");
+            PresupostFitxatges = 200;
+        }
+
         PlayersMarket = new Market();
 
         if (args.length > 2)
@@ -97,15 +102,12 @@ public class Manfut {
                 // Get playes from team number. Returns false if the team is not valid.
                 if ((jugadors = market.ObtenirJugadorsEquip(new IdEquip(equip))) == null)
                     continue;
-
-                //System.out.print("Team " + equip + "->");
-
+                //System.out.print("Team " + equip + "->")
                 // Reject teams with repeated players.
                 if (jugadors.JugadorsRepetits()) {
                     //System.out.println(Error.color_red +" Invalid." + Error.end_color);
                     continue;    // Equip no valid.
                 }
-
 
                 // Chech if the team points is bigger than current optimal team, then evaluate if the cost is lower than the available budget
                 if (jugadors.PuntuacioEquip() > MaxPuntuacio && jugadors.CostEquip() < presupost) {
@@ -116,9 +118,7 @@ public class Manfut {
                     Manfut.threads_return[this.index] = equip;
                     // System.out.println(MillorEquip);
                     // System.out.println(Error.color_green + " Cost: " + jugadors.CostEquip() + " Points: " + jugadors.PuntuacioEquip() + ". " + Error.end_color);
-                } else {
-                    //System.out.println(" Cost: " + jugadors.CostEquip() + " Points: " + jugadors.PuntuacioEquip() + ".\r");
-                }
+                }  //System.out.println(" Cost: " + jugadors.CostEquip() + " Points: " + jugadors.PuntuacioEquip() + ".\r");
             }
         }
     }

@@ -198,7 +198,7 @@ void CalcularEquipOptim(long int PresupostFitxatges, PtrJugadorsEquip MillorEqui
 	printf("TOTAL: First: %llXH End: %llXH\n", first, end);
 	
 	//Numero de combinacions que haurà de calcular cada thread
-	int combinacions_per_thread = ((end - first)/(numero_threads+1));
+	int combinacions_per_thread = ceil((end - first)/(numero_threads+1));
 	
 	struct ThreadArgs args_arr[10];
 	
